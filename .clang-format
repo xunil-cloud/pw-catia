@@ -1,0 +1,11 @@
+﻿---
+AllowAllArgumentsOnNextLine: 'false'
+AllowAllParametersOfDeclarationOnNextLine: 'false'
+AllowShortFunctionsOnASingleLine: Empty
+BinPackArguments: 'false'
+BinPackParameters: 'false'
+ColumnLimit: '90'
+IndentWidth: 4
+Language: Cpp
+
+...
