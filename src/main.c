@@ -90,16 +90,47 @@ static const struct pw_registry_events registry_events = {
 
 };
 
+static void
+draw_function(GtkDrawingArea *area, cairo_t *cr, int width, int height, gpointer data) {
+    // struct data *d = data;
+
+    GdkRGBA color;
+    GtkStyleContext *context;
+
+    context = gtk_widget_get_style_context(GTK_WIDGET(area));
+
+    cairo_arc(cr,
+              width / 2.0,
+              height / 2.0,
+              MIN(width / 3, height / 3) / 2.0,
+              0,
+              2 * G_PI);
+
+    gtk_style_context_get_color(context, &color);
+    gdk_cairo_set_source_rgba(cr, &color);
+
+    cairo_fill(cr);
+}
+
 static void activate(GtkApplication *app, gpointer user_data) {
     GtkWidget *window;
-    GtkWidget *button;
+    GtkWidget *canvas = gtk_drawing_area_new();
+
+    int width = 200;
+    int height = 200;
+
+    gtk_drawing_area_set_content_width(GTK_DRAWING_AREA(canvas), width);
+    gtk_drawing_area_set_content_height(GTK_DRAWING_AREA(canvas), height);
+    gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(canvas),
+                                   draw_function,
+                                   user_data,
+                                   NULL);
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Window");
-    gtk_window_set_default_size(GTK_WINDOW(window), 200, 200);
+    gtk_window_set_default_size(GTK_WINDOW(window), width, height);
 
-    button = gtk_button_new_with_label("pw-catia");
-    gtk_window_set_child(GTK_WINDOW(window), button);
+    gtk_window_set_child(GTK_WINDOW(window), canvas);
 
     gtk_window_present(GTK_WINDOW(window));
 }
