@@ -21,24 +21,30 @@ struct global {
     struct spa_list link;
     struct spa_hook proxy_listener;
 };
-static void removed_proxy(void *user_data);
+
+static void handle_proxy_event_removed(void *user_data) {
+    struct global *g = user_data;
+    printf("[removed] object: id:%u\n", g->id);
+    pw_proxy_destroy(g->proxy);
+}
 
 static const struct pw_proxy_events proxy_events = {
     PW_VERSION_PROXY_EVENTS,
-    .removed = removed_proxy,
+    .removed = handle_proxy_event_removed,
     // .destroy = destroy_proxy,
 };
 
-static void registry_event_global(void *data,
-                                  uint32_t id,
-                                  uint32_t permissions,
-                                  const char *type,
-                                  uint32_t version,
-                                  const struct spa_dict *props) {
+static void handle_registry_event_global(void *data,
+                                         uint32_t id,
+                                         uint32_t permissions,
+                                         const char *type,
+                                         uint32_t version,
+                                         const struct spa_dict *props) {
     struct data *d = data;
     struct global *g;
     uint32_t client_version;
     struct pw_proxy *proxy;
+
     if (strcmp(type, PW_TYPE_INTERFACE_Node) == 0) {
         client_version = PW_VERSION_NODE;
         printf("object: id:%u type:%s/%d name:%s\n",
@@ -64,34 +70,25 @@ static void registry_event_global(void *data,
     } else {
         return;
     }
+
     proxy =
         pw_registry_bind(d->registry, id, type, client_version, sizeof(struct global));
     if (proxy == NULL)
         return;
+
     g = pw_proxy_get_user_data(proxy);
     g->id = id;
     g->proxy = proxy;
+
     pw_proxy_add_listener(proxy, &g->proxy_listener, &proxy_events, g);
-
-    g->id = id;
     spa_list_insert(&d->globals, &g->link);
-}
-
-static void removed_proxy(void *user_data) {
-    struct global *g = user_data;
-    printf("[removed] object: id:%u\n", g->id);
-    pw_proxy_destroy(g->proxy);
 }
 
 static const struct pw_registry_events registry_events = {
     PW_VERSION_REGISTRY_EVENTS,
-    .global = registry_event_global,
+    .global = handle_registry_event_global,
 
 };
-
-static void print_hello(GtkWidget *widget, gpointer data) {
-    g_print("Hello World\n");
-}
 
 static void activate(GtkApplication *app, gpointer user_data) {
     GtkWidget *window;
@@ -101,8 +98,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
     gtk_window_set_title(GTK_WINDOW(window), "Window");
     gtk_window_set_default_size(GTK_WINDOW(window), 200, 200);
 
-    button = gtk_button_new_with_label("Hello World");
-    g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
+    button = gtk_button_new_with_label("pw-catia");
     gtk_window_set_child(GTK_WINDOW(window), button);
 
     gtk_window_present(GTK_WINDOW(window));
@@ -140,7 +136,7 @@ int main(int argc, char **argv) {
 
     status = g_application_run(G_APPLICATION(app), argc, argv);
 
-    printf("\nleave_app_loop\n");
+    printf("\nleave_app_loop\n\n");
 
     pw_thread_loop_stop(data.loop);
     pw_proxy_destroy((struct pw_proxy *)data.registry);
