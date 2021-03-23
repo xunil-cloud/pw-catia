@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
     data.core =
         pw_context_connect(data.context, NULL /* properties */, 0 /* user_data size */);
     data.registry =
-        pw_core_get_registry(data.core, PW_VERSION_REGISTRY, 0 /* user_data size */);
+        pw_core_get_registry(data.core, PW_VERSION_REGISTRY, sizeof(struct data));
 
     spa_zero(data.registry_listener);
     pw_registry_add_listener(data.registry,
